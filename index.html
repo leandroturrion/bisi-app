@@ -3,156 +3,156 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#0f172a">
-  <title>BiSI - Rutas Intermodales</title>
+  <title>BiSI - Rutas Intermodales para Ciclistas</title>
   
+  <!-- Configuración PWA y soporte Móvil (Android / iOS) -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#16a34a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="BiSI">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+
+  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="css/styles.css" />
-  <!-- Configuración PWA y soporte iOS -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#16a34a">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="BiSI">
-<link rel="apple-touch-icon" href="assets/icon-192.png">
+  
+  <!-- Estilos BiSI -->
+  <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
   <div id="app-container">
-    <div id="map"></div>
-
-    <!-- Banner si se entra desde un link compartido -->
+    
+    <!-- Banner de Ruta Compartida por WhatsApp/Enlace -->
     <div id="banner-grupal" class="banner-grupal" style="display: none;">
-      <span>🚴 Salida grupal planificada</span>
+      <span>🚴 Ruta cargada desde enlace</span>
       <button onclick="cerrarBannerGrupal()">✕</button>
     </div>
 
-    <!-- Tarjeta Superior Flotante -->
-    <div id="top-bar" class="colapsado">
+    <!-- Mapa Leaflet -->
+    <div id="map"></div>
+
+    <!-- Tarjeta Superior Flotante / Buscador -->
+    <div id="top-bar">
       <div class="header-mobile">
-        <div class="brand-logo">🚲 Bi<span>SI</span></div>
+        <div class="brand-logo">Bi<span>SI</span> 🚲</div>
         <div class="header-actions">
           <button class="btn-cafecito" onclick="abrirModalDonar()">☕ Apoyar</button>
           <button class="btn-circle" onclick="abrirModalPerfil()" title="Ajustes y Perfil">⚙️</button>
-          <button id="btn-toggle-top" class="btn-circle" onclick="toggleTopBar()" title="Ocultar/Mostrar">▼</button>
+          <button id="btn-toggle-top" class="btn-circle" onclick="toggleTopBar()">▲</button>
         </div>
       </div>
 
-      <!-- Barra Teaser cuando está colapsado -->
+      <!-- Teaser colapsado para ganar espacio en el mapa -->
       <div id="search-teaser" onclick="expandirTopBar()">
         <div class="teaser-text">
-          <span class="teaser-icon">🧭</span>
+          <span class="teaser-icon">🔍</span>
           <div>
-            <strong id="teaser-title">¿Cuál es el plan de hoy?</strong>
-            <small>Tocá para configurar tu ruta</small>
+            <strong id="teaser-title">🚲 Modo Urbano: Pedaleo directo</strong>
+            <small>Toca para cambiar puntos de partida o llegada</small>
           </div>
         </div>
-        <span class="teaser-arrow">➔</span>
+        <span class="teaser-arrow">▼</span>
       </div>
 
-      <!-- Formulario de Búsqueda -->
+      <!-- Contenedor desplegable del buscador -->
       <div id="top-collapsible">
+        <!-- Selector de Modo de Plan -->
         <div class="plan-selector">
           <button id="btn-plan-urbano" class="btn-plan active" onclick="cambiarModoPlan('urbano')">
-            <div class="plan-head">🚲 Urbano / Diario</div>
-            <div class="plan-desc">Pedaleo directo en ciudad</div>
+            <div class="plan-head">🚲 Urbano</div>
+            <div class="plan-desc">CABA y Conurbano</div>
           </button>
           <button id="btn-plan-escapada" class="btn-plan" onclick="cambiarModoPlan('escapada')">
             <div class="plan-head">🌲 Escapada</div>
-            <div class="plan-desc">Bici + Tren a pueblos y rutas</div>
+            <div class="plan-desc">Pueblos Rurales</div>
           </button>
         </div>
 
+        <!-- Inputs de Búsqueda con Autocompletado -->
         <div class="search-inputs">
           <div class="input-row">
             <div class="input-wrapper">
-              <input type="text" id="input-origen" value="" placeholder="📍 Punto de salida..." autocomplete="off">
+              <input type="text" id="input-origen" placeholder="Punto de partida o 📍 GPS..." autocomplete="off">
               <div id="sug-origen" class="autocomplete-list"></div>
             </div>
-            <button class="btn-swap-mobile" onclick="invertirPuntos()" title="Invertir">⇅</button>
+            <button class="btn-swap-mobile" onclick="invertirPuntos()" title="Invertir sentido">⇅</button>
           </div>
 
-          <div class="input-wrapper">
-            <input type="text" id="input-destino" value="" placeholder="🏁 ¿A dónde vas?" autocomplete="off">
-            <div id="sug-destino" class="autocomplete-list"></div>
+          <div class="input-row">
+            <div class="input-wrapper">
+              <input type="text" id="input-destino" placeholder="¿A dónde vas?" autocomplete="off">
+              <div id="sug-destino" class="autocomplete-list"></div>
+            </div>
           </div>
 
-          <div id="wrapper-escapadas" class="row-presets" style="display: none;">
-            <select id="select-escapadas" class="select-escapadas" onchange="seleccionarEscapada(this.value)">
-              <option value="" disabled selected>✨ Elegí un pueblo o circuito clásico...</option>
-              <option value="Carlos Keen">📍 Carlos Keen (Polo Gastronómico)</option>
-              <option value="Tomás Jofré">📍 Tomás Jofré (Mercedes)</option>
-              <option value="Uribelarrea">📍 Uribelarrea (Pueblo Turístico)</option>
-              <option value="Jáuregui">📍 Jáuregui / Villa Flandria</option>
-              <option value="Zárate">📍 Costanera Zárate</option>
-              <option value="Tigre">📍 Delta de Tigre</option>
-              <option value="City Bell">📍 City Bell (La Plata)</option>
+          <!-- Selector rápido de escapadas rurales -->
+          <div class="row-presets" id="wrapper-escapadas" style="display: none;">
+            <select class="select-escapadas" onchange="seleccionarEscapada(this.value)">
+              <option value="">Destinos populares de fin de semana...</option>
+              <option value="Carlos Keen">Carlos Keen (Luján)</option>
+              <option value="Tomás Jofré">Tomás Jofré (Mercedes)</option>
+              <option value="Uribelarrea">Uribelarrea (Cañuelas)</option>
+              <option value="Jáuregui">Jáuregui / Villa Flandria</option>
             </select>
           </div>
+
+          <button class="btn-trazar-mobile" onclick="procesarRuta()">Calcular Recorrido</button>
         </div>
-
-        <button class="btn-trazar-mobile" onclick="procesarRuta()">Trazar Recorrido</button>
       </div>
     </div>
 
-    <!-- Botón Restaurar Detalle -->
-    <button id="btn-restore-sheet" class="fab-expand-route" onclick="restaurarSheet()">
-      📊 Ver Detalles de Ruta
-    </button>
+    <!-- Botones Flotantes de Acción en Ruta -->
+    <button class="fab-nav" id="btn-wake-lock" onclick="toggleModoNavegacion()">▶️ Navegar</button>
+    <button class="fab-gps" id="btn-gps" onclick="obtenerUbicacionGPS()" title="Ubicarme con GPS">📍</button>
+    <button class="fab-expand-route" id="btn-restore-sheet" onclick="restaurarSheet()">📋 Ver Ruta</button>
 
-    <!-- Botón Modo Navegación / Pantalla Activa -->
-    <button id="btn-wake-lock" class="fab-nav" onclick="toggleModoNavegacion()" title="Modo en ruta">
-      ▶️ Navegar
-    </button>
-
-    <!-- Botón Flotante GPS -->
-    <button id="btn-gps" class="fab-gps" onclick="obtenerUbicacionGPS()" title="Mi ubicación">📍</button>
-
-    <!-- Bottom Sheet Deslizable -->
+    <!-- Bottom Sheet / Panel Inferior de Información y Comparativas -->
     <div id="bottom-sheet">
-      <div id="sheet-drag-area" class="sheet-header-bar">
-        <div style="width: 20px;"></div>
+      <div class="sheet-header-bar" id="sheet-drag-area">
         <div class="handle-bar"></div>
-        <button class="btn-close-sheet" onclick="event.stopPropagation(); ocultarSheetCompleta();">✕</button>
+        <button class="btn-close-sheet" onclick="ocultarSheetCompleta()">✕</button>
       </div>
-      <div id="info-mobile" class="sheet-content"></div>
+      <div class="sheet-content" id="info-mobile">
+        <!-- El contenido se inyecta dinámicamente con app.js -->
+      </div>
     </div>
+
   </div>
 
-  <!-- MODAL DE AJUSTES Y PERFIL CICLISTA -->
+  <!-- MODAL: AJUSTES Y PERFIL CICLISTA + INSTALACIÓN PWA -->
   <div id="modal-perfil" onclick="cerrarModalPerfil(event)">
     <div class="modal-card" onclick="event.stopPropagation()">
-      <div style="font-size: 1.8rem; margin-bottom: 4px;">⚙️🚴</div>
-      <h2>Ajustes y Perfil</h2>
-      <p>Configurá tus preferencias de pedaleo.</p>
+      <h2>⚙️ Tu Perfil Ciclista</h2>
+      <p>Configurá tu estilo para cálculos de tiempo más precisos.</p>
       
       <div class="profile-group">
-        <label>¿Qué bici usás?</label>
+        <label>Tipo de Bicicleta</label>
         <div class="chip-group" id="chips-bici">
-          <button type="button" class="chip active" onclick="setChip('bici', 'mtb')">🚵 MTB / Gravel</button>
-          <button type="button" class="chip" onclick="setChip('bici', 'ruta')">🚴 Ruta / Fixie</button>
-          <button type="button" class="chip" onclick="setChip('bici', 'urbana')">🚲 Urbana / Paseo</button>
+          <button class="chip active" onclick="setChip('bici', 'mtb')">🚵 MTB / Urbana</button>
+          <button class="chip" onclick="setChip('bici', 'gravel')">🚲 Gravel</button>
+          <button class="chip" onclick="setChip('bici', 'ruta')">🚴 Ruta (Finas)</button>
         </div>
       </div>
 
       <div class="profile-group">
-        <label>Ritmo de pedaleo</label>
+        <label>Ritmo de Pedaleo</label>
         <div class="chip-group" id="chips-ritmo">
-          <button type="button" class="chip" onclick="setChip('ritmo', 'paseo')">🐢 Paseo (~15 km/h)</button>
-          <button type="button" class="chip active" onclick="setChip('ritmo', 'medio')">🚴 Medio (~20 km/h)</button>
-          <button type="button" class="chip" onclick="setChip('ritmo', 'rapido')">⚡ Rápido (~25 km/h)</button>
+          <button class="chip" onclick="setChip('ritmo', 'paseo')">Tranqui (~15 km/h)</button>
+          <button class="chip active" onclick="setChip('ritmo', 'medio')">Medio (~20 km/h)</button>
+          <button class="chip" onclick="setChip('ritmo', 'rapido')">Fuerte (~25 km/h)</button>
         </div>
       </div>
 
-      <div class="profile-group extra-actions-group">
-        <label>Opciones Rápidas</label>
+      <div class="profile-group">
+        <label>Personalización & App</label>
         <div class="settings-action-row">
-          <button type="button" class="btn-setting-row" onclick="toggleDarkMode()">
-            <span id="btn-theme-label">🌙 Modo Oscuro</span>
-          </button>
-          <button type="button" class="btn-setting-row" onclick="enviarFeedbackWhatsApp()">
-            💬 Enviar Feedback
+          <button class="btn-setting-row" onclick="toggleDarkMode()" id="btn-theme-label">🌙 Modo Oscuro</button>
+          <button class="btn-setting-row" onclick="enviarFeedbackWhatsApp()">💬 Sugerencias</button>
+          <!-- Botón de instalación nativo PWA -->
+          <button id="btn-instalar-pwa" class="btn-setting-row" style="display: none; background: #16a34a; color: white; border: none; grid-column: span 2; margin-top: 4px;" onclick="dispararInstalacionPWA()">
+            📲 Instalar BiSI en este celular
           </button>
         </div>
       </div>
@@ -162,37 +162,67 @@
     </div>
   </div>
 
-  <!-- Modal Mercado Pago -->
-  <div id="modal-donar" onclick="cerrarModalDonar(event)">
+  <!-- MODAL: DONACIONES Y CAFECITO / MERCADO PAGO -->
+  <div id="modal-donar" onclick="cerrarModalDonar()">
     <div class="modal-card" onclick="event.stopPropagation()">
-      <div style="font-size: 2.2rem; margin-bottom: 4px;">☕🚴</div>
-      <h2>¿Te sirve BiSI?</h2>
-      <p>BiSI es un proyecto 100% independiente. Podés colaborar invitando un cafecito para mantener activos los servidores y el desarrollo.</p>
+      <h2>☕ Apoyar el proyecto</h2>
+      <p>BiSI es una herramienta colaborativa y libre para la comunidad ciclista.</p>
       
       <div class="alias-box">
         <div>
-          <div style="font-size: 0.7rem; color: var(--text-muted); text-align: left;">ALIAS MERCADO PAGO:</div>
-          <div id="alias-mp" class="alias-text">Leandro.turrion</div>
+          <small style="color: var(--text-muted); display: block; text-align: left; font-size: 0.72rem;">ALIAS MERCADO PAGO</small>
+          <span class="alias-text">Leandro.turrion</span>
         </div>
-        <button id="btn-copiar" class="btn-copy" onclick="copiarAlias()">Copiar</button>
+        <button class="btn-copy" id="btn-copiar" onclick="copiarAlias()">Copiar</button>
       </div>
-      
-      <button class="btn-modal-cancel" onclick="cerrarModalDonar()">Volver a la App</button>
+
+      <button class="btn-modal-action" onclick="window.open('https://cafecito.app', '_blank')">Invitar un Cafecito</button>
+      <button class="btn-modal-cancel" onclick="cerrarModalDonar()">Volver al mapa</button>
     </div>
   </div>
 
+  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="js/trenes.js"></script>
+  
+  <!-- Scripts de la App -->
+  <script src="js/data_trenes.js"></script>
   <script src="js/rutas.js"></script>
   <script src="js/app.js"></script>
+
+  <!-- PWA & Service Worker Registration Script -->
   <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('BiSI PWA Service Worker registrado'))
-        .catch(err => console.warn('Error al registrar Service Worker:', err));
+    let promptInstalacion = null;
+
+    // Captura el evento de instalación nativa en Android/Chrome
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      promptInstalacion = e;
+      const btnInstalar = document.getElementById('btn-instalar-pwa');
+      if (btnInstalar) btnInstalar.style.display = 'block';
     });
-  }
-</script>
+
+    async function dispararInstalacionPWA() {
+      if (!promptInstalacion) {
+        alert("Para instalar en iPhone: tocá Compartir (cuadradito con flecha) ➔ 'Agregar a pantalla de inicio'.\nEn Android: tocá los 3 puntitos de Chrome ➔ 'Instalar aplicación'.");
+        return;
+      }
+      promptInstalacion.prompt();
+      const { outcome } = await promptInstalacion.userChoice;
+      if (outcome === 'accepted') {
+        const btnInstalar = document.getElementById('btn-instalar-pwa');
+        if (btnInstalar) btnInstalar.style.display = 'none';
+      }
+      promptInstalacion = null;
+    }
+
+    // Registro del Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(() => console.log('BiSI PWA Service Worker registrado con éxito'))
+          .catch(err => console.warn('Error en Service Worker:', err));
+      });
+    }
+  </script>
 </body>
 </html>

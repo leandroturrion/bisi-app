@@ -1,8 +1,10 @@
 {
+  "id": "/",
   "name": "BiSI - Rutas Intermodales",
   "short_name": "BiSI",
-  "description": "Calculador de rutas ciclistas intermodales e inteligentes para Buenos Aires y alrededores.",
+  "description": "Calculador de rutas ciclistas intermodales inteligentes.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0f172a",
