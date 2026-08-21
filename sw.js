@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bisi-cache-v1';
+const CACHE_NAME = 'bisi-cache-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -6,14 +6,14 @@ const ASSETS_TO_CACHE = [
   '/js/data_trenes.js',
   '/js/rutas.js',
   '/js/app.js',
-  '/manifest.json'
+  '/manifest.json',
+  '/assets/icon-192.png',
+  '/assets/icon-512.png'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
   );
   self.skipWaiting();
 });
@@ -30,12 +30,13 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Ignoramos peticiones a APIs externas (Nominatim, Photon, OSRM, Clima) para no cachear datos viejos
-  if (event.request.url.includes('photon.komoot.io') || 
-      event.request.url.includes('open-meteo.com') || 
-      event.request.url.includes('project-osrm.org') ||
-      event.request.url.includes('openstreetmap.org') ||
-      event.request.url.includes('cartocdn.com')) {
+  if (
+    event.request.url.includes('photon.komoot.io') ||
+    event.request.url.includes('open-meteo.com') ||
+    event.request.url.includes('project-osrm.org') ||
+    event.request.url.includes('openstreetmap.org') ||
+    event.request.url.includes('cartocdn.com')
+  ) {
     return;
   }
 
